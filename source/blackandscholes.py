@@ -1,8 +1,11 @@
+import numpy
 import requests
 import xml.etree.ElementTree as ET
 
 from scipy.interpolate import interp1d
-from scipy import sqrt, log, exp
+from numpy.lib.scimath import log
+from numpy.lib.scimath import sqrt
+from numpy import exp
 from scipy.stats import norm
 from scipy.optimize import fsolve
 
@@ -46,7 +49,7 @@ class BlackandScholes:
         self.S, self.K, self.T, self.option, self.q = S, K, T, option, q
         self.r = r
         self.opt_price = price
-        self.impvol = self.implied_volatility()
+        self.sigma = self.implied_volatility()
 
     @staticmethod
     def _BlackScholesCall(S, K, T, sigma, r, q):
@@ -74,37 +77,37 @@ class BlackandScholes:
             return self._BlackScholesPut(S, K, T, sigma, r, q)
 
     def implied_volatility(self):
-        impvol = lambda x: self.BS(self.S, self.K, self.T, x, self.r, self.q) - self.opt_price
+        impvol = lambda sigma: self.BS(self.S, self.K, self.T, sigma, self.r, self.q) - self.opt_price
         iv = fsolve(impvol, SOLVER_STARTING_VALUE, fprime=self._fprime, xtol=IMPLIED_VOLATILITY_TOLERANCE)
         return iv[0]
 
     def delta(self):
         h = DELTA_DIFFERENTIAL
-        p1 = self.BS(self.S + h, self.K, self.T, self.impvol, self.r, self.q)
-        p2 = self.BS(self.S - h, self.K, self.T, self.impvol, self.r, self.q)
+        p1 = self.BS(self.S + h, self.K, self.T, self.sigma, self.r, self.q)
+        p2 = self.BS(self.S - h, self.K, self.T, self.sigma, self.r, self.q)
         return (p1-p2)/(2*h)
 
     def gamma(self):
         h = GAMMA_DIFFERENTIAL
-        p1 = self.BS(self.S + h, self.K, self.T, self.impvol, self.r, self.q)
-        p2 = self.BS(self.S, self.K, self.T, self.impvol, self.r, self.q)
-        p3 = self.BS(self.S - h, self.K, self.T, self.impvol, self.r, self.q)
+        p1 = self.BS(self.S + h, self.K, self.T, self.sigma, self.r, self.q)
+        p2 = self.BS(self.S, self.K, self.T, self.sigma, self.r, self.q)
+        p3 = self.BS(self.S - h, self.K, self.T, self.sigma, self.r, self.q)
         return (p1 - 2*p2 + p3)/(h**2)
 
     def vega(self):
         h = VEGA_DIFFERENTIAL
-        p1 = self.BS(self.S, self.K, self.T, self.impvol + h, self.r, self.q)
-        p2 = self.BS(self.S, self.K, self.T, self.impvol - h, self.r, self.q)
+        p1 = self.BS(self.S, self.K, self.T, self.sigma + h, self.r, self.q)
+        p2 = self.BS(self.S, self.K, self.T, self.sigma - h, self.r, self.q)
         return (p1-p2)/(2*h*100)
 
     def theta(self):
         h = THETA_DIFFERENTIAL
-        p1 = self.BS(self.S, self.K, self.T + h, self.impvol, self.r, self.q)
-        p2 = self.BS(self.S, self.K, self.T - h, self.impvol, self.r, self.q)
+        p1 = self.BS(self.S, self.K, self.T + h, self.sigma, self.r, self.q)
+        p2 = self.BS(self.S, self.K, self.T - h, self.sigma, self.r, self.q)
         return (p1-p2)/(2*h*365)
 
     def rho(self):
         h = RHO_DIFFERENTIAL
-        p1 = self.BS(self.S, self.K, self.T, self.impvol, self.r + h, self.q)
-        p2 = self.BS(self.S, self.K, self.T, self.impvol, self.r - h, self.q)
+        p1 = self.BS(self.S, self.K, self.T, self.sigma, self.r + h, self.q)
+        p2 = self.BS(self.S, self.K, self.T, self.sigma, self.r - h, self.q)
         return (p1-p2)/(2*h*100)

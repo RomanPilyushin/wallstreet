@@ -27,13 +27,9 @@ def parse(val):
 
 # send headers=headers on every session.get request to add a user agent to the header per https://stackoverflow.com/questions/10606133/sending-user-agent-using-requests-library-in-python
 def get_headers(agent='Mozilla/5.0'):
-    headers = requests.utils.default_headers()
-    headers.update(
-        {
-            'User-Agent': agent,
-        }
-    )
-    
+    headers = {
+        'User-Agent': agent
+    }
     return headers
 
 class ClassPropertyDescriptor:
