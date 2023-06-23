@@ -284,7 +284,7 @@ class Option:
         else:
             r.raise_for_status()
 
-        valid_json = re.sub(r'(?<={|,)([a-zA-Z][a-zA-Z0-9_]*)(?=:)', r'"\1"', r.text)
+        valid_json = requests.sub(r'(?<={|,)([a-zA-Z][a-zA-Z0-9_]*)(?=:)', r'"\1"', r.text)
         self.data = json.loads(valid_json)
 
         if 'expirations' not in self.data:
